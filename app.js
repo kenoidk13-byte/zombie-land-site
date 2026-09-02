@@ -77,6 +77,8 @@
 
   // Hover distortion on cards (2D port of experiment-space shader — applied to the card itself)
   const prefersFine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  const isTouchDevice = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || navigator.maxTouchPoints > 1;
+  const isNarrow = () => window.innerWidth <= 820;
   if (prefersFine) {
     const easeSmooth = (a, b, x) => {
       const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
@@ -203,22 +205,22 @@
     };
 
     const make = (fromTop) => {
-      const dense = !prefersFine; // on touch/mobile: heavier ambient rain
+      const dense = isTouchDevice || isNarrow(); // on touch/mobile or narrow viewport: heavier ambient rain
       return {
         x: Math.random() * W,
         y: fromTop ? -Math.random() * H * 0.4 : Math.random() * H,
         vx: (Math.random() - 0.5) * 0.8,
-        vy: (dense ? 1 : 0.5) + Math.random() * 1.6,
-        r: (Math.random() * 3 + 2) * dpr * 0.6 * (dense ? 1.5 : 1),
+        vy: (dense ? 0.7 : 0.5) + Math.random() * 1.6,
+        r: (Math.random() * 3 + 2) * dpr * 0.6 * (dense ? 1.25 : 1),
         phase: Math.random() * Math.PI * 2,
         wob: (Math.random() * 1.1 + 0.2) * dpr,
-        alpha: (dense ? 0.3 : 0.15) + Math.random() * 0.45
+        alpha: (dense ? 0.22 : 0.15) + Math.random() * 0.45
       };
     };
 
     const seeded = () => {
-      const dense = !prefersFine;
-      const n = Math.round(W ? Math.min(MAXD, W / (dense ? 14 : 22 * dpr)) : 40);
+      const dense = isTouchDevice || isNarrow();
+      const n = Math.round(W ? Math.min(MAXD, W / (dense ? 16 : 22 * dpr)) : 40);
       drips.length = 0;
       for (let i = 0; i < n; i++) drips.push(make(true));
     };
@@ -280,7 +282,7 @@
 
   // --- Constant blood stream from the cursor (always, over the whole page) ---
   const cursorBlood = (() => {
-    if (!prefersFine) return {}; // no cursor blood on touch/mobile
+    if (isTouchDevice || isNarrow()) return {}; // no cursor blood on touch/mobile or narrow viewport
     const cv = document.createElement('canvas');
     cv.className = 'cursor-blood';
     cv.setAttribute('aria-hidden', 'true');
@@ -317,6 +319,7 @@
     }, { passive: true });
 
     const step = () => {
+      if (isNarrow()) { drops.length = 0; return; } // stop and clear on narrow viewport
       const now = performance.now();
       if (mx > -100) {
         acc += 1;
@@ -356,6 +359,8 @@
     };
 
     const loop = () => {
+      const narrow = isNarrow();
+      cv.style.display = narrow ? 'none' : '';
       step();
       draw();
       raf = requestAnimationFrame(loop);
