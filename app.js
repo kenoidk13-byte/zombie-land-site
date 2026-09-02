@@ -202,19 +202,23 @@
       H = cv.height = Math.max(1, Math.round(window.innerHeight * dpr));
     };
 
-    const make = (fromTop) => ({
-      x: Math.random() * W,
-      y: fromTop ? -Math.random() * H * 0.4 : Math.random() * H,
-      vx: (Math.random() - 0.5) * 0.8,
-      vy: 0.5 + Math.random() * 1.6,
-      r: (Math.random() * 3 + 2) * dpr * 0.6,
-      phase: Math.random() * Math.PI * 2,
-      wob: (Math.random() * 1.1 + 0.2) * dpr,
-      alpha: 0.15 + Math.random() * 0.45
-    });
+    const make = (fromTop) => {
+      const dense = !prefersFine; // on touch/mobile: heavier ambient rain
+      return {
+        x: Math.random() * W,
+        y: fromTop ? -Math.random() * H * 0.4 : Math.random() * H,
+        vx: (Math.random() - 0.5) * 0.8,
+        vy: (dense ? 1 : 0.5) + Math.random() * 1.6,
+        r: (Math.random() * 3 + 2) * dpr * 0.6 * (dense ? 1.5 : 1),
+        phase: Math.random() * Math.PI * 2,
+        wob: (Math.random() * 1.1 + 0.2) * dpr,
+        alpha: (dense ? 0.3 : 0.15) + Math.random() * 0.45
+      };
+    };
 
     const seeded = () => {
-      const n = Math.round(W ? Math.min(MAXD, W / (22 * dpr)) : 40);
+      const dense = !prefersFine;
+      const n = Math.round(W ? Math.min(MAXD, W / (dense ? 14 : 22 * dpr)) : 40);
       drips.length = 0;
       for (let i = 0; i < n; i++) drips.push(make(true));
     };
@@ -276,6 +280,7 @@
 
   // --- Constant blood stream from the cursor (always, over the whole page) ---
   const cursorBlood = (() => {
+    if (!prefersFine) return {}; // no cursor blood on touch/mobile
     const cv = document.createElement('canvas');
     cv.className = 'cursor-blood';
     cv.setAttribute('aria-hidden', 'true');
