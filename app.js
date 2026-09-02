@@ -3,6 +3,28 @@
 
   // Theme toggle removed — theme is fixed to dark.
 
+  // Mobile hamburger menu
+  const hamburger = document.getElementById('navHamburger');
+  const mobileMenu = document.getElementById('mobileMenu');
+  if (hamburger && mobileMenu) {
+    hamburger.addEventListener('click', () => {
+      const isOpen = mobileMenu.classList.toggle('open');
+      hamburger.classList.toggle('active');
+      hamburger.setAttribute('aria-expanded', isOpen);
+      mobileMenu.setAttribute('aria-hidden', !isOpen);
+      document.body.style.overflow = isOpen ? 'hidden' : '';
+    });
+    mobileMenu.querySelectorAll('a').forEach((a) => {
+      a.addEventListener('click', () => {
+        mobileMenu.classList.remove('open');
+        hamburger.classList.remove('active');
+        hamburger.setAttribute('aria-expanded', 'false');
+        mobileMenu.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+      });
+    });
+  }
+
   // Cursor glow
   const cursor = $('#cursor');
   document.addEventListener('mousemove', (e) => {
@@ -100,6 +122,9 @@
     });
   });
 
+  // Disable parallax transforms on mobile for cleaner layout
+  const isMobile = () => window.matchMedia('(max-width:820px)').matches;
+
   // Buttery smooth scroll (custom eased rAF animation, offset for fixed nav)
   let scrollAnim = null;
   function smoothScrollTo(target) {
@@ -137,6 +162,12 @@
   let ticking = false;
   function onScrollParallax() {
     const y = window.pageYOffset;
+    if (isMobile()) {
+      if (heroContent) heroContent.style.transform = '';
+      if (head3d) head3d.style.transform = '';
+      ticking = false;
+      return;
+    }
     if (heroContent) heroContent.style.transform = `translateY(${y * 0.18}px)`;
     if (head3d) head3d.style.transform = `translateY(${y * -0.12}px)`;
     parallaxCfg.forEach(({ el, mid, speed }) => {
