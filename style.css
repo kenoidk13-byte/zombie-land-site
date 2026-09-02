@@ -195,7 +195,7 @@ blockquote .blood{color:var(--blood)}
 .contact-social a:hover{color:var(--blood)}
 
 /* Footer */
-.footer{border-top:1px solid var(--line);padding:40px 40px 40px;display:flex;align-items:center;color:var(--muted)}
+.footer{border-top:1px solid var(--line);padding:40px 40px 40px;display:flex;align-items:center;color:#fff}
 .footer-top{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:16px;width:100%}
 .footer-top span:first-child{justify-self:start;letter-spacing:.14em}
 .footer-top span:last-child{justify-self:end;text-align:right}
