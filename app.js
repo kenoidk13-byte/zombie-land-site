@@ -25,12 +25,6 @@
     });
   }
 
-  // Cursor glow
-  const cursor = $('#cursor');
-  document.addEventListener('mousemove', (e) => {
-    cursor.style.transform = `translate(calc(${e.clientX}px - 50%), calc(${e.clientY}px - 50%))`;
-  }, { passive: true });
-
   // Background music — subtle, quiet, on/off via nav button
   const bgMusic = $('#bgMusic');
   const soundBtn = $('#navSound');
@@ -56,31 +50,29 @@
   onScroll();
   window.addEventListener('scroll', onScroll, { passive: true });
 
-  // Grid population — fixed order from images/z01..z15
-  const featured = $('#featured');
+  // Editorial grid — photos of varying sizes
   const IMG_COUNT = 15;
-  const cats = ['SURVIVOR', 'HORDE', 'WALKER', 'GRAVEYARD', 'PATIENT ZERO', 'CRAWLER', 'ROT', 'OUTBREAK'];
   const titles = [
     'Feeding Hour', 'First Bite', 'The Hollow Ones', 'Patient Zero', 'Night of the Dead',
     'Rot & Rebirth', 'The Crawl', 'Empty Streets', 'Last Standing', 'The Bridge',
     'Twilight of the Undead', 'Into the Horde', 'Cold Grave', 'The Return', 'Bright Rot'
   ];
+  const srcOf = (i) => i === 14 ? 'images/z16.webp' : `images/z${String(i + 1).padStart(2, '0')}.webp`;
+
+  const stage = $('#editStage');
+  const grid = document.createElement('div');
+  grid.className = 'edit-grid';
+  stage.appendChild(grid);
 
   for (let i = 0; i < IMG_COUNT; i++) {
-    const n = String(i + 1).padStart(2, '0');
-    const src = i === 14 ? 'images/z16.webp' : `images/z${n}.webp`;
-    const card = document.createElement('a');
-    card.className = 'card';
-    card.href = '#work';
-    card.innerHTML = `
-      <img src="${src}" alt="${titles[i]}" loading="lazy" />
-      <span class="card-idx">${String(i + 1).padStart(2, '0')}</span>
-      <span class="card-overlay">
-        <span class="card-cat">${cats[i % cats.length]}</span>
-        <span class="card-num">${titles[i]}</span>
-      </span>
+    const a = document.createElement('a');
+    a.className = 'card edit-card';
+    a.href = '#work';
+    a.innerHTML = `
+      <img src="${srcOf(i)}" alt="${titles[i]}" loading="lazy" />
+      <span class="edit-card-num">${titles[i]}</span>
     `;
-    featured.appendChild(card);
+    grid.appendChild(a);
   }
 
   // Hover distortion on cards (2D port of experiment-space shader — applied to the card itself)
@@ -192,6 +184,184 @@
       window.addEventListener('resize', () => { if (!running) sample(); });
     });
   }
+
+  // --- Forever dripping blood (ambient background layer over the whole site) ---
+  const forever = (() => {
+    const cv = document.createElement('canvas');
+    cv.className = 'forever-blood';
+    cv.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(cv);
+    const cx = cv.getContext('2d');
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    let W = 0, H = 0, raf = 0;
+    const drips = [];
+    const MAXD = 220;
+
+    const size = () => {
+      W = cv.width = Math.max(1, Math.round(window.innerWidth * dpr));
+      H = cv.height = Math.max(1, Math.round(window.innerHeight * dpr));
+    };
+
+    const make = (fromTop) => ({
+      x: Math.random() * W,
+      y: fromTop ? -Math.random() * H * 0.4 : Math.random() * H,
+      vx: (Math.random() - 0.5) * 0.8,
+      vy: 0.5 + Math.random() * 1.6,
+      r: (Math.random() * 3 + 2) * dpr * 0.6,
+      phase: Math.random() * Math.PI * 2,
+      wob: (Math.random() * 1.1 + 0.2) * dpr,
+      alpha: 0.15 + Math.random() * 0.45
+    });
+
+    const seeded = () => {
+      const n = Math.round(W ? Math.min(MAXD, W / (22 * dpr)) : 40);
+      drips.length = 0;
+      for (let i = 0; i < n; i++) drips.push(make(true));
+    };
+
+    const step = () => {
+      const t = performance.now() * 0.001;
+      for (let i = drips.length - 1; i >= 0; i--) {
+        const d = drips[i];
+        d.vy += 0.03;
+        d.y += d.vy;
+        d.x += d.vx + Math.sin(t * 2 + d.phase) * d.wob * 0.02;
+        if (d.y > H + d.r * 4) { drips[i] = make(true); }
+        // occasional bleed trail
+        if (Math.random() < 0.004 && drips.length < MAXD) {
+          drips.push({ x: d.x, y: d.y - d.r, vx: (Math.random() - 0.5) * 0.5, vy: 0.3 + Math.random(),
+            r: d.r * 0.6, phase: Math.random() * Math.PI * 2, wob: d.wob * 0.5, alpha: d.alpha * 0.7 });
+        }
+      }
+    };
+
+    const draw = () => {
+      cx.setTransform(1, 0, 0, 1, 0, 0);
+      cx.clearRect(0, 0, W, H);
+      const t = performance.now() * 0.001;
+      for (let i = 0; i < drips.length; i++) {
+        const d = drips[i];
+        const wobx = Math.sin(t * 3 + d.phase) * d.wob;
+        cx.globalAlpha = d.alpha;
+        cx.fillStyle = '#a01416';
+        cx.beginPath();
+        cx.ellipse(d.x + wobx, d.y, d.r * 0.5, d.r, 0, 0, Math.PI * 2);
+        cx.fill();
+        // thin dripline tail
+        cx.globalAlpha = d.alpha * 0.5;
+        cx.beginPath();
+        cx.rect(d.x + wobx - d.r * 0.14, d.y - d.r * 2.4, d.r * 0.28, d.r * 2);
+        cx.fill();
+      }
+      cx.globalAlpha = 1;
+    };
+
+    const loop = () => {
+      step();
+      draw();
+      raf = requestAnimationFrame(loop);
+    };
+
+    const init = () => {
+      size();
+      seeded();
+      if (!raf) raf = requestAnimationFrame(loop);
+    };
+
+    window.addEventListener('resize', () => { size(); seeded(); });
+
+    return { init };
+  })();
+  forever.init();
+
+  // --- Constant blood stream from the cursor (always, over the whole page) ---
+  const cursorBlood = (() => {
+    const cv = document.createElement('canvas');
+    cv.className = 'cursor-blood';
+    cv.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(cv);
+    const cx = cv.getContext('2d');
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    let W = 0, H = 0, raf = 0;
+    let mx = -999, my = -999, acc = 0;
+    const drops = [];
+    const MAX = 160;
+
+    const size = () => {
+      W = cv.width = Math.max(1, Math.round(window.innerWidth * dpr));
+      H = cv.height = Math.max(1, Math.round(window.innerHeight * dpr));
+    };
+
+    const spawn = (x, y) => {
+      if (drops.length >= MAX) return;
+      drops.push({
+        x: x * dpr,
+        y: y * dpr,
+        vx: (Math.random() - 0.5) * 1.8,
+        vy: 0.8 + Math.random() * 1.2,
+        r: (Math.random() * 5 + 5) * dpr * 0.5,
+        phase: Math.random() * Math.PI * 2,
+        wob: (Math.random() * 0.7 + 0.2) * dpr,
+        grav: 0.05 + Math.random() * 0.1,
+        life: 1
+      });
+    };
+
+    window.addEventListener('mousemove', (e) => {
+      mx = e.clientX; my = e.clientY;
+    }, { passive: true });
+
+    const step = () => {
+      const now = performance.now();
+      if (mx > -100) {
+        acc += 1;
+        if (acc >= 2) {
+          acc = 0;
+          spawn(mx, my);
+        }
+      }
+      for (let i = drops.length - 1; i >= 0; i--) {
+        const d = drops[i];
+        d.vy += d.grav;
+        d.y += d.vy;
+        d.x += d.vx;
+        d.life -= 0.008;
+        if (d.y > H + d.r * 4 || d.life <= 0) { drops.splice(i, 1); }
+      }
+    };
+
+    const draw = () => {
+      cx.setTransform(1, 0, 0, 1, 0, 0);
+      cx.clearRect(0, 0, W, H);
+      const t = performance.now() * 0.001;
+      for (let i = 0; i < drops.length; i++) {
+        const d = drops[i];
+        const wobx = Math.sin(t * 5 + d.phase) * d.wob;
+        // pooling at spawn point (leader + trail)
+        cx.fillStyle = '#a01416';
+        cx.beginPath();
+        cx.ellipse(d.x + wobx, d.y, d.r * 0.5, d.r, 0, 0, Math.PI * 2);
+        cx.fill();
+        cx.globalAlpha = 0.6;
+        cx.beginPath();
+        cx.rect(d.x + wobx - d.r * 0.14, d.y - d.r * 2.2, d.r * 0.28, d.r * 2);
+        cx.fill();
+        cx.globalAlpha = 1;
+      }
+    };
+
+    const loop = () => {
+      step();
+      draw();
+      raf = requestAnimationFrame(loop);
+    };
+
+    size();
+    raf = requestAnimationFrame(loop);
+    window.addEventListener('resize', size);
+
+    return {};
+  })();
 
   // Scroll reveal — smooth fade + rise + blur
   const io = new IntersectionObserver((entries) => {
