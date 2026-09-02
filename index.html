@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Zombieland — Undead Creative Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- Film grain noise -->
+<div class="grain" aria-hidden="true"></div>
+<svg class="grain-svg" aria-hidden="true">
+  <filter id="grainFilter">
+    <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch" />
+    <feColorMatrix type="saturate" values="0" />
+  </filter>
+</svg>
+
+<!-- Cursor glow -->
+<div class="cursor" id="cursor"></div>
+
+<!-- Fixed Nav -->
+<header class="nav">
+  <a href="#top" class="nav-logo">
+    <span class="logo-stagger">Z</span><span class="logoblood">o</span><span class="nav-logo-text">mbieland</span>
+  </a>
+  <nav class="nav-links">
+    <a href="#work" class="letterspaced">Projects</a>
+    <a href="#studio" class="letterspaced">Studio</a>
+    <a href="#contact" class="letterspaced">Contact</a>
+  </nav>
+  <button class="nav-sound" id="navSound" aria-label="Toggle music"><span id="navSoundIcon">&#9835;</span></button>
+</header>
+
+<!-- HERO -->
+<section class="hero" id="top">
+  <div class="head3d" id="head3d" aria-hidden="true"></div>
+  <div class="hero-content">
+    <p class="hero-kicker letterspaced">Zombieland - Another Day in Hell</p>
+    <h1 class="hero-title letters-drift" data-split><span class="hero-sm glitch" data-text="Risen from">Risen from</span><br /><span class="blood glitch" data-text="the dead">the dead</span></h1>
+    <div class="hero-foot">
+      <p class="hero-sub">We build undead identities that are<br /><span class="impossible">impossible to ignore.</span></p>
+      <div class="scroll-hint letterspaced">Scroll / <span class="blood scroll-blood">Blood &#8595;</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- Marquee -->
+<div class="marquee" aria-hidden="true">
+  <div class="marquee-track">
+    <span>FEED THE HORDE <span class="marquee-dot">&#9679;</span></span><span>ROTTEN BY DESIGN <span class="marquee-dot">&#9679;</span></span><span>UNDEAD STUDIO <span class="marquee-dot">&#9679;</span></span><span>BRAINS &amp; BLOOD <span class="marquee-dot">&#9679;</span></span>
+    <span>FEED THE HORDE <span class="marquee-dot">&#9679;</span></span><span>ROTTEN BY DESIGN <span class="marquee-dot">&#9679;</span></span><span>UNDEAD STUDIO <span class="marquee-dot">&#9679;</span></span><span>BRAINS &amp; BLOOD <span class="marquee-dot">&#9679;</span></span>
+  </div>
+</div>
+
+<!-- WORK / GALLERY -->
+<section class="work" id="work">
+  <div class="section-head">
+    <p class="section-no letterspaced">01 / The Horde</p>
+    <h2 class="section-title letters-drift" data-split><span class="glitch" data-text="Select">Select</span><br /><span class="blood glitch" data-text="your zombie">your zombie</span></h2>
+  </div>
+
+  <div class="featured" id="featured"></div>
+</section>
+
+<!-- STUDIO / ABOUT -->
+<section class="studio" id="studio">
+  <div class="section-head">
+    <p class="section-no letterspaced">02 / The Studio</p>
+    <h2 class="section-title letters-drift" data-split><span class="glitch" data-text="what was">what was</span><br /><span class="blood glitch" data-text="that?">that?</span></h2>
+  </div>
+  <div class="studio-body">
+    <div class="studio-visual">
+      <img src="images/z16.webp" alt="Studio portrait" />
+    </div>
+    <div class="studio-text">
+      <p class="studio-lead">More than a portfolio, this became a curated visual space with better pacing, stronger atmosphere, and a clearer point of view — <em>straight from the grave.</em></p>
+      <div class="studio-col">
+        <h4 class="glitch letters-drift" data-text="Overview">Overview</h4>
+        <p>I created these characters because I really love zombies and everything related to them. I like their unusual and creepy appearance. I wanted to create my own zombies with interesting designs. I hope they turned out unusual and memorable.</p>
+      </div>
+      <div class="studio-col">
+        <h4 class="glitch letters-drift" data-text="My Approach">My Approach</h4>
+        <p>When creating the zombies, I was inspired by movies, games, and other works about zombies. I was inspired by their scary and unusual appearance. I also added my own ideas to make the characters look original. Most of all, I wanted to create a dark and frightening atmosphere.</p>
+      </div>
+      <div class="studio-col">
+        <h4 class="glitch letters-drift" data-text="Outcome">Outcome</h4>
+        <p>15 undead assets delivered, each one ready to crawl off the screen and bite. The result feels sharper, more controlled, and impossible to walk past.</p>
+      </div>
+      <div class="studio-meta letterspaced">
+        <span>Vinogradov Vladimir — Art Direction</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- QUOTE -->
+<section class="quote" data-parallax="0.18">
+  <blockquote data-split>"The final result feels far more<br /><span class="blood">resolved</span> than what we started with —<br />there's more atmosphere, more gore."</blockquote>
+  <p class="quote-author">Vinogradov Vladimir, Founder of the Horde</p>
+</section>
+
+<!-- CONTACT -->
+<section class="contact" id="contact">
+  <div class="section-head">
+    <p class="section-no letterspaced">03 / Contact</p>
+    <h2 class="section-title blood glitch letters-drift" data-split><span class="glitch" data-text="Let's make">Let's make</span><br /><span class="glitch" data-text="something dead.">something dead.</span></h2>
+  </div>
+  <a class="contact-mail" href="mailto:Kenoid@yandex.ru">Kenoid@yandex.ru</a>
+  <a class="contact-mail contact-tg" href="https://t.me/Kenoid">Telegram</a>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-top letterspaced">
+    <span>&#169; File 13</span>
+    <nav class="footer-nav">
+      <a href="#work">Projects</a>
+      <a href="#studio">Studio</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <span>Risen from the dead</span>
+  </div>
+</footer>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" aria-hidden="true">
+  <img class="lightbox-img" id="lightboxImg" alt="" />
+  <button class="lightbox-close" id="lightboxClose" aria-label="Close">&times;</button>
+</div>
+
+<audio id="bgMusic" src="music/dark-circus.m4a" loop preload="auto"></audio>
+
+<script src="app.js"></script>
+<script src="head3d.data.js"></script>
+<script src="head3d.bundle.js"></script>
+</body>
+</html>
