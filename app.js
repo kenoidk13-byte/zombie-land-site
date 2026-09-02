@@ -412,9 +412,6 @@
     });
   });
 
-  // Disable parallax transforms on mobile for cleaner layout
-  const isMobile = () => window.matchMedia('(max-width:820px)').matches;
-
   // Buttery smooth scroll (custom eased rAF animation, offset for fixed nav)
   let scrollAnim = null;
   function smoothScrollTo(target) {
@@ -452,7 +449,7 @@
   let ticking = false;
   function onScrollParallax() {
     const y = window.pageYOffset;
-    if (isMobile()) {
+    if (isNarrow()) {
       if (heroContent) heroContent.style.transform = '';
       if (head3d) head3d.style.transform = '';
       ticking = false;
