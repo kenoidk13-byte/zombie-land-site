@@ -14,13 +14,13 @@
 - Hero background remains visible.
 - 3D head is centered, fully visible, and proportionally reduced to `72vw` with a `620px` maximum.
 - At `399px` and below, the 3D head is completely hidden.
-- At `399px` and below, the hero background uses `background-size: 200% auto`, is positioned at `30% 30%`, extends 47px below the hero to the top of the `Select` heading, and fades into the site background from 60% down.
+- At `399px` and below, the hero background uses `background-size: 260% auto`, is positioned at `30% 30%`, extends 47px below the hero to the top of the `Select` heading, and fades into the site background from 60% down.
 - At `400px–820px`, the hero background uses `background-size: cover`.
 
 ## Current Implementation
 
 - Responsive rules are in `style.css`.
-- The stylesheet cache version is `style.css?v=50` in `index.html`.
+- The stylesheet cache version is `style.css?v=51` in `index.html`.
 - Head resize handling is fixed in `head3d.bundle.js`; resize parallax refresh is in `app.js`.
 - Local preview: `http://127.0.0.1:4173`.
 
