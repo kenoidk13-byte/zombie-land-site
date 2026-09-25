@@ -338,6 +338,7 @@ blockquote .blood{color:var(--blood)}
 
 @media (max-width:399px){
   .head3d{display:none}
-  .hero::before{background-size:auto 200%}
+  .work{position:relative;z-index:1}
+  .hero::before{bottom:-47px;background-image:linear-gradient(to bottom,transparent 60%,var(--bg) 100%),linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.55)),url("images/hero-background.webp?v=3");background-position:center top,30% 30%,30% 30%;background-size:cover,200% auto,200% auto}
 }
 
