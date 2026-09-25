@@ -472,6 +472,7 @@
   onScrollParallax();
   window.addEventListener('resize', () => {
     vhCache.v = window.innerHeight;
+    onScrollParallax();
   });
 
   // Lightbox — open big photo on card click

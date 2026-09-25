@@ -23496,16 +23496,25 @@
     }
     window.addEventListener("resize", onResize);
     onResize();
+    let headFitBounds = null;
     function fitHead() {
-      const box = new Box3().setFromObject(head);
-      const size = box.getSize(new Vector3());
-      const maxDim = Math.max(size.x, size.y, size.z) || 1;
+      if (!head) return;
+      if (!headFitBounds) {
+        const box = new Box3().setFromObject(head);
+        const size = box.getSize(new Vector3());
+        const center = box.getCenter(new Vector3());
+        headFitBounds = {
+          maxDim: Math.max(size.x, size.y, size.z) || 1,
+          x: center.x,
+          y: center.y,
+          z: center.z
+        };
+      }
       const fov = camera.fov * (Math.PI / 180);
       const visibleH = 2 * Math.tan(fov / 2) * Math.abs(camera.position.z);
-      const scale = (visibleH * 0.82) / maxDim;
+      const scale = (visibleH * 0.82) / headFitBounds.maxDim;
       head.scale.setScalar(scale);
-      const center = box.getCenter(new Vector3());
-      head.position.set(-center.x * scale, -center.y * scale, -center.z * scale);
+      head.position.set(-headFitBounds.x * scale, -headFitBounds.y * scale, -headFitBounds.z * scale);
     }
     const b64 = window.__HEAD_GLB_BASE64;
     if (!b64) return;
