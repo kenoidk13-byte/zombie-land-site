@@ -336,3 +336,8 @@ blockquote .blood{color:var(--blood)}
   .grain{opacity:.10}
 }
 
+@media (max-width:399px){
+  .head3d{display:none}
+  .hero::before{background-size:auto 200%}
+}
+
