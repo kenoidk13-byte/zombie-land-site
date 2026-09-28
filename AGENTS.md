@@ -17,10 +17,12 @@
 
 | Tier | Query | Purpose |
 | --- | --- | --- |
-| Desktop | `> 820px` (i.e. 821px+) | default rules |
-| Tablet | `max-width:820px` | `style.css:246` |
-| Phone | `max-width:480px` | `style.css:291` |
-| Small phone | `max-width:399px` | `style.css:339` |
+| Desktop | `> 820px` (i.e. 821px+) | default rules — plus one narrow block at `style.css:208` holding only `.lightbox-img` |
+| Tablet | `max-width:820px` | `style.css:272` |
+| Phone | `max-width:480px` | `style.css:326` |
+| Small phone | `max-width:399px` | `style.css:371` |
+
+Re-derive these line numbers with `grep -n "^@media" style.css` — they drift on every edit.
 
 ## Desktop (821px+)
 
@@ -28,9 +30,9 @@
 - Hero background is `.hero::before`, `top:-150px; right:0; bottom:0; left:0`, `z-index:0`, `pointer-events:none`, `background-position:center top`, `no-repeat`, `background-size:cover`.
   - **Current state: three layers, all `cover`, `center top`, on the BASE rule (every width).** No `@media (min-width:821px)` hero override exists at all — the only thing in that block is `.lightbox-img`. Layers, topmost first: `linear-gradient(to bottom, transparent 46%, var(--bg) 96%)` (fades the photo's bottom edge into the page bg), `linear-gradient(rgba(0,0,0,.8), rgba(0,0,0,.8))` (80% darkening), then `url("images/hero-background.webp?v=5")`. Plus `background-color:var(--bg)` behind them.
   - **No grayscale, no brightness filter, no `transform`, no `contain`, no zoom on desktop.** A long chain of desktop experiments (contain, 40%/60%/85%/92% darkening, `filter:grayscale(1)`, `transform:scale(1.2) translateX(...)`) was tried and the user reverted every one of it with "верни как было". Do not re-add them without being asked.
-  - The `max-width:399px` rule has its own three layers: fade `transparent 60% → var(--bg) 100%`, 55% black, and `background-position: center top, 30% 30%, 30% 30%` with `background-size: cover, 260% auto, 260% auto`.
+  - The `max-width:399px` block no longer has a `.hero::before` rule at all (see the mobile note below).
   - The image is a shared asset, so replacing it changes the hero on every width. It was last replaced from `~/Downloads/20260928_074030_0_UTC_0.png` (2752×1536, actually JPEG data despite the `.png` name) → `cwebp -q 82 -m 6 -resize 2000 0` → 2000×1117, 239 KB. The previous version is kept in `images/_backup/hero-background.v5.webp`; older ones in `images/_backup/hero-background.v3.webp`. `images/_backup/` is local-only and must never be committed.
-  - **Mobile has its own hero photo** (this is a deliberate user request, not a fallback): `images/hero-background-mobile.webp`, from `~/Desktop/20260928_064040_0_UTC_0.jpeg` (1536×2752 portrait) → `cwebp -q 78 -m 6 -resize 1200 0` → 1200×2150, 320 KB. It is referenced from the `max-width:820px` block and from the `max-width:399px` block, both as `?v=1`. The desktop/base rule still points at the landscape `hero-background.webp` — do not "unify" these, they are intentionally different pictures.
+  - **Mobile has its own hero photo** (a deliberate user request, not a fallback): `images/hero-background-mobile.webp`, from `~/Desktop/20260928_064040_0_UTC_0.jpeg` (1536×2752 portrait) → `cwebp -q 78 -m 6 -resize 1200 0` → 1200×2150, 320 KB, referenced as `?v=1` from the `max-width:820px` block only. The desktop/base rule still points at the landscape `hero-background.webp` — do not "unify" these, they are intentionally different pictures.
   - `background-image` is **not** an additive property, so a media query that changes only the photo must redeclare the whole layer list (both gradients + the `url()`). Positions and `background-size` are inherited from the base rule, so those can be left alone.
   - **Mobile mirrors the main page exactly** ("надо сделать так же как на главной, я про цвет и затемнение и затушёвку внизу"). The `max-width:820px` override declares only what genuinely differs — the `url()` and `bottom:-150px`. The fade (`transparent 46% → var(--bg) 96%`), the 80% black, `background-color/position/repeat/size` are all inherited from the base rule, so the two treatments can never drift apart. The `max-width:399px` block has **no `.hero::before` rule at all** any more; its old lighter values (55% black, 60% fade stop) are gone.
   - **The hero photo bleeds `-150px` past the hero on every mobile width.** It used to bleed only `-47px` and only below 400px, so from 400px to 820px the photo stopped dead at the hero edge and the entire "Select" heading sat on flat page background — the user reported the picture was missing under the heading. Measured: the heading block spans 138px below the hero bottom (368→496 at 360–430px), so `-150px` covers all of it; at 768px the heading starts 80px into the bleed.
@@ -57,9 +59,9 @@
 
 ## Mobile / Tablet (820px and below)
 
-- JavaScript-side narrowing is a single helper: `isNarrow() => window.innerWidth <= 820` (`app.js:81`). Everything JS-driven keys off it.
+- JavaScript-side narrowing is a single helper: `isNarrow() => window.innerWidth <= 820` (`app.js:85`). Everything JS-driven keys off it.
 - Parallax is fully disabled: `onScrollParallax()` clears both `hero-content` and `head3d` transforms and returns early.
-- Cursor blood is skipped entirely (`app.js:285` returns early on touch devices / narrow) and the canvas is hidden by the rAF loop on narrow.
+- Cursor blood is skipped entirely (`app.js:289` returns `{}` on touch devices / narrow) and the loop clears its drops when `isNarrow()` (`app.js:326`).
 - Ambient rain is **denser** on mobile: `dense = isTouchDevice || isNarrow()` → count `W/16` instead of `W/(22*dpr)`, bigger radius (×1.25), higher alpha (0.22 base), faster fall (`vy` 0.7 base).
 - Hero: `height:auto; min-height:0`, so the hero is content-driven. `margin-top` is still `150px` here (only the `max-width:480px` rule lowers it to `100px`).
 - Hero content: `padding:120px 24px 80px`, `margin-bottom:0` (desktop's `300px` negative pull is gone).
@@ -68,7 +70,7 @@
 - Gallery: 2 columns, `gap:10px` (and `gap:8px` at `max-width:480px`).
 - Studio: single column (`grid-template-columns:1fr`, gap 40px), visual is `position:static` with `clip-path:none`.
 - Nav: `.nav-links` hidden, hamburger shown, `.nav-sound{margin-left:0}`.
-- Hero background at 400–820px: stays `background-size:cover` (the default rule, no override).
+- Hero background at 400–820px: the portrait `hero-background-mobile.webp`, `cover` + `center top`, bleeding `-150px` past the hero. Colour/darkening/fade are inherited from the base rule so they match the main page — see the Desktop hero section for the full reasoning and the seam measurement.
 
 ## Phone (480px and below)
 
@@ -81,13 +83,11 @@
 - Footer becomes a centred vertical stack, `padding:28px 16px`, `gap:28px`.
 - The 3D head is still visible here (72vw) — it only disappears below 400px.
 
-## Small phone (399px and below) — `style.css:339`
+## Small phone (399px and below) — `style.css:371`
 
 - `.head3d{display:none}` — the 3D head is completely removed, not just shrunk.
-- `.work{position:relative; z-index:1}` — lifts the gallery above the extended hero background.
-- `.hero::before` gets `bottom:-47px` so the background bleeds 47px past the hero, landing on the `Select` heading.
-  - Three background layers now: `linear-gradient(to bottom, transparent 60%, var(--bg) 100%)` (the fade-in, `background-size:cover`), then `linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.55))` (55% black instead of 80%), then the image.
-  - `background-position: center top, 30% 30%, 30% 30%` and `background-size: cover, 260% auto, 260% auto`.
+- `.work{position:relative; z-index:1}` — lifts the gallery above the bleeding hero background. Redundant now that the same rule lives in the 820px block, but harmless and it documents *why* the lift is needed.
+- **There is no `.hero::before` rule in this block any more.** It used to carry a lighter treatment of its own (55% black, `60%` fade stop, `30% 30%` position, `260% auto` zoom, `bottom:-47px`) that was tuned for the old landscape photo. With the portrait mobile photo the user asked for the treatment to match the main page, so everything is inherited from the 820px block, which itself mirrors the base rule. Do not reintroduce per-breakpoint hero values here.
 
 ## Content / Behaviour
 
@@ -123,13 +123,16 @@
 
 - Run `node --check app.js`.
 - Run `node --check head3d.bundle.js`.
+- Sanity-check the CSS braces: `python3 -c "s=open('style.css').read(); print(s.count('{')==s.count('}'))"`.
 - Local preview: `http://127.0.0.1:4173`.
 - Check 4 widths in Chrome: 821px+ (desktop), 400–820px (tablet), exactly 480px, and 399px/400px — the 399/400 pair is the sensitive edge because the head appears/disappears there.
-- The 3D head is wrapped in `try/catch`: if WebGL is unavailable (old GPU, blocklisted driver, hardened browser) `initHead()` logs a warning and returns instead of throwing. The rest of the page is unaffected either way.
+- There is no build step and no unit tests. Everything above was verified by driving headless Chrome over CDP with throwaway scripts in `/var/folders/f0/…/T/opencode/`: `fit2.mjs`/`fit3.mjs` (hero background-size/position per width), `bleed.mjs` (hero/work geometry and `elementFromPoint` hit-testing), `seam.mjs` (real pixel sampling across the photo's bottom cut, includes a small zlib + manual PNG unfilter decoder), `burger.mjs` (hamburger → X state). They are scratch files and are not part of the repo; rewrite them if you need them again.
+- **When driving that harness, wait for `document.querySelectorAll('.edit-card').length > 0` before clicking anything.** A fixed `wait(2000)` is not enough on a cold profile — `head3d.data.js` is a multi-MB base64 line and `app.js` had not executed yet, so `getElementById('navHamburger').click()` silently did nothing and the probe read white bars. It looked like a CSS bug and was not one.
 - Known leftovers, harmless: `data-split` appears on 5 headings but no JS or CSS reads it; the `data-letters-drift` mention in an `app.js` comment is stale (the real selector is `.letters-drift`); `blockquote` and `h1` are styled as bare element selectors.
 
 ## Git
 
-- Branch `main`, tracking `origin/main`.
-- HEAD at this log entry: `d447953` (`Increase small-screen hero background`).
-- `.DS_Store` and `images/_backup/` are local temporary files and must never be committed.
+- Branch `main`, tracking `origin/main`. Commit style: subject line only, no body, sentence case, imperative ("Increase small-screen hero background"). Every commit so far has a single-line message — keep it that way.
+- Recent history: `804634c` Make mobile menu close icon red → `41cb1ef` Add lightbox paging and mobile-specific hero background → `d447953` Increase small-screen hero background.
+- `.DS_Store` and `images/_backup/` are local temporary files and must never be committed. They are the only two entries that ever show up as untracked; if anything else does, stop and look at it before staging.
+- `head3d.bundle.js` is generated/bundled but committed, so a diff there is real and must be read, not waved through.
