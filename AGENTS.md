@@ -8,7 +8,7 @@
 - Fonts: Inter 400–900 + IBM Plex Mono 400/500, from Google Fonts.
 - Theme is hard-locked dark (`<html data-theme="dark">`); the toggle was removed from `app.js`.
 - Photos are all 768×1376 (vertical). `images/hero-background.webp` is 2000×1117.
-- Cache-busting: `style.css?v=84`, `app.js?v=42`, `favicon.svg?v=1`, `images/hero-background.webp?v=5`, `images/hero-background-mobile.webp?v=1`.
+- Cache-busting: `style.css?v=85`, `app.js?v=42`, `favicon.svg?v=1`, `images/hero-background.webp?v=5`, `images/hero-background-mobile.webp?v=1`.
   Bump the `?v=` number in `index.html` whenever the file behind it changes, otherwise returning visitors keep the stale copy. Bump `app.js` too if you edited JS, not just the CSS.
   **Always `grep` the current `?v=` value before writing the `sed` pattern.** A chain of `sed 's|v=74|v=75|'` commands silently no-opped because `index.html` was still on `v=71`, and `sed -i ''` prints nothing on a miss, so it looked like it worked. Verify afterwards with `grep -on 'style\.css?v=[0-9]*' index.html` and by curling the served file and grepping for the new rule.
 - The film-grain overlay (`.grain`) uses `inset:-5%`, **not** `-100%`. `grainShift` offsets by up to 3%, and `translate()` percentages resolve against the element's own box, so a 110% box still covers the seam. It was originally `-100%`, which made the composited layer 9× the viewport area (4320×2700 = 44.5 MB of layer texture, and 178 MB on a 2× Retina display) — that was the main cause of janky scrolling. Measured `-5%` at 1584×990 = 1.21× the viewport and 23.9 MB on Retina, i.e. 7.4× less, with the same visual result. Never raise that `inset` without re-measuring.
@@ -53,6 +53,7 @@
 - Known remaining scroll cost: two fixed full-viewport canvases (`.forever-blood`, `.cursor-blood`) each `clearRect` + refill every rAF with no idle skip or tab-visibility pause; the head3d WebGL loop renders continuously; `.nav.scrolled` uses `backdrop-filter: blur(6px)`; 92 per-letter `letter-drift` spans plus `title-wobble` and `glitch` animations are always running. Measured 60 fps with 0 long tasks on a discrete GPU at `devicePixelRatio` 1, so the bottleneck is GPU compositing, not JS.
 - Ambient blood rain (`.forever-blood`): fixed canvas, `z-index:0`, `opacity:.85`, `saturate(.7) brightness(.95)`, colour `#a01416`, max 220 drips.
 - Cursor blood (`.cursor-blood`): desktop-only, `z-index:0`, spawns every 2nd `mousemove`, max 160 drops, hides itself when `isNarrow()`.
+- Hamburger (`.nav-hamburger`, 3 × 22×2px bars) morphs into an X via `.active`: bars 1 and 3 rotate to `top:19px` ±45deg and the middle one fades out. In that state the bars are **`var(--blood)` red** (`#e24a4a` under the dark theme), not white — the user asked for the close X to be red. `background .3s` is in the `transition` alongside `transform`/`opacity` so the colour change animates with the rotation. Applies at every width, but the button is only displayed ≤820px, so in practice it is mobile-only. Verified in-browser at 390px: closed = `rgb(255,255,255)` with no rotation, open = `rgb(226,74,74)` on all three bars with `matrix(0.707107, 0.707107, …)` on bars 1/3, and the menu overlay gets `.open`.
 
 ## Mobile / Tablet (820px and below)
 
