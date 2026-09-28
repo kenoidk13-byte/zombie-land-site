@@ -278,15 +278,18 @@ blockquote .blood{color:var(--blood)}
   .hero-content{padding:120px 24px 80px;margin-bottom:0}
   .hero-kicker{margin-bottom:20px}
   /* Mobile-only hero photo: a portrait 1536x2752 source, so it needs its own asset instead of
-     the desktop landscape one. Colour, darkening and the bottom fade are byte-for-byte the
-     desktop values (80% black, `transparent 46% -> var(--bg) 96%`) — only the `url()` and the
-     `bottom` bleed differ, everything else (background-color/position/repeat/size) is inherited
-     from the base rule so the two can never drift apart.
+     the desktop landscape one. The 80% black and the `transparent 46% -> var(--bg) 96%` bottom
+     fade are byte-for-byte the desktop values, so colour and bottom fade match the main page;
+     `background-color/position/repeat` are inherited from the base rule.
      `bottom:-150px` bleeds the photo past the hero so it stays visible behind the "Select"
      heading; without it, 400-820px had no bleed and the heading sat on flat page background.
      The fade reaches full `var(--bg)` at 96% of the box, i.e. before the photo is cut at 100%,
-     so the bottom edge of the picture dissolves instead of ending on a hard line. */
-  .hero::before{bottom:-150px;background-image:linear-gradient(to bottom,transparent 46%,var(--bg) 96%),linear-gradient(rgba(0,0,0,.8),rgba(0,0,0,.8)),url("images/hero-background-mobile.webp?v=1");background-size:cover,cover,cover}
+     so the bottom edge of the picture dissolves instead of ending on a hard line.
+     Layer 1 is an extra top shading, mobile only: it darkens the upper part of the photo where
+     the nav and the hero copy sit, then falls off to nothing by 38% so the middle of the picture
+     keeps the same brightness as the desktop version. It is the one deliberate difference from
+     the desktop treatment. Note `background-size` now needs 4 values to match the 4 layers. */
+  .hero::before{bottom:-150px;background-image:linear-gradient(to bottom,rgba(4,4,4,.62),rgba(4,4,4,0) 38%),linear-gradient(to bottom,transparent 46%,var(--bg) 96%),linear-gradient(rgba(0,0,0,.8),rgba(0,0,0,.8)),url("images/hero-background-mobile.webp?v=1");background-size:cover,cover,cover,cover}
   /* The bleed means the photo now sits under the section content, and a positioned z-index:0
      pseudo-element paints over static in-flow text. Lift .work so the headings stay readable. */
   .work{position:relative;z-index:1}
