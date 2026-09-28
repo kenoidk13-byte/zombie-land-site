@@ -64,6 +64,9 @@
   grid.className = 'edit-grid';
   stage.appendChild(grid);
 
+  // ordered list of gallery items, used by the lightbox to page between photos
+  const gallery = [];
+
   for (let i = 0; i < IMG_COUNT; i++) {
     const a = document.createElement('a');
     a.className = 'card edit-card';
@@ -73,6 +76,7 @@
       <span class="edit-card-num">${titles[i]}</span>
     `;
     grid.appendChild(a);
+    gallery.push({ src: srcOf(i), alt: titles[i] });
   }
 
   // Hover distortion on cards (2D port of experiment-space shader — applied to the card itself)
@@ -425,7 +429,7 @@
     const step = (ts) => {
       if (start === null) start = ts;
       const p = Math.min((ts - start) / dur, 1);
-      window.scrollTo(0, from + dist * ease(p));
+      window.scrollTo({ top: from + dist * ease(p), behavior: 'instant' });
       if (p < 1) scrollAnim = requestAnimationFrame(step);
     };
     scrollAnim = requestAnimationFrame(step);
@@ -479,33 +483,144 @@
   const lightbox = $('#lightbox');
   const lightboxImg = $('#lightboxImg');
   const lightboxClose = $('#lightboxClose');
+  const lightboxPrev = $('#lightboxPrev');
+  const lightboxNext = $('#lightboxNext');
+  const lightboxCounter = $('#lightboxCounter');
+  let current = -1;
 
-  function openLightbox(src, alt) {
-    lightboxImg.src = src;
-    lightboxImg.alt = alt;
+  const N = gallery.length;
+  const wrap = (i) => (i % N + N) % N;
+  const warm = (i) => { const im = new Image(); im.src = gallery[wrap(i)].src; };
+
+  // Arrow placement. On desktop they sit 20px outside the photo's own edges, which has to be
+  // measured because the photos are portrait: at 1440x900 the 90vh height cap, not the width
+  // cap, decides how wide the image is. On mobile there is no room for an outside gap, so
+  // they stay pinned to the viewport edges.
+  // This reads offsetLeft/offsetWidth, NOT getBoundingClientRect(): `render()` kicks off a
+  // 0.34s slide-in, and a transition that has only just started still reports the *old*
+  // transformed geometry. getBoundingClientRect() here measured the photo 38% (172px) to the
+  // right and threw the arrows off the edge of the screen after every page.
+  const NAV_W = 52, NAV_GAP = 20;
+  const placeNav = () => {
+    if (!lightbox.classList.contains('open')) return;
+    const box = lightbox.clientWidth;
+    const left = lightboxImg.offsetLeft, wide = lightboxImg.offsetWidth;
+    lightboxPrev.style.left = (isNarrow() ? 0 : left - NAV_W - NAV_GAP) + 'px';
+    lightboxNext.style.left = (isNarrow() ? box - NAV_W : left + wide + NAV_GAP) + 'px';
+    // The X shares the right-hand gutter with the next arrow: 20px outside the photo on
+    // desktop, flush to the viewport edge on mobile. offsetWidth, not the 43px constant,
+    // because the <=480px rule bumps the button to 48px for touch.
+    const cw = lightboxClose.offsetWidth;
+    lightboxClose.style.left = (isNarrow() ? box - cw : left + wide + NAV_GAP) + 'px';
+  };
+  lightboxImg.addEventListener('load', placeNav);
+  window.addEventListener('resize', placeNav);
+
+  function render(i, dir) {
+    const next = wrap(i);
+    if (next === current) return;
+    // Slide the new photo in from the direction of travel. No opacity fade: while the photo
+    // is semi-transparent the pure-black gallery cards behind it show through at almost the
+    // same size (444x796 vs 452x810) and read as a black plate flashing under the photo.
+    if (dir) {
+      lightboxImg.style.transition = 'none';
+      lightboxImg.style.transform = `translateX(${dir > 0 ? 38 : -38}%)`;
+      void lightboxImg.offsetWidth; // force reflow so the transition replays
+      lightboxImg.style.transition = '';
+      lightboxImg.style.transform = '';
+    }
+    current = next;
+    lightboxImg.src = gallery[current].src;
+    lightboxImg.alt = gallery[current].alt;
+    if (lightboxCounter) lightboxCounter.textContent = `${current + 1} / ${N}`;
+    warm(current + 1);
+    warm(current - 1);
+    placeNav();
+  }
+
+  function openLightbox(index) {
+    current = -1;
+    render(index, 0);
     lightbox.classList.add('open');
     lightbox.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
+    placeNav();
   }
   function closeLightbox() {
     lightbox.classList.remove('open');
     lightbox.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
   }
+  const step = (d) => { if (current < 0) return; render(current + d, d); };
 
-  document.querySelectorAll('.card').forEach((card) => {
+  document.querySelectorAll('.card').forEach((card, i) => {
     card.addEventListener('click', (e) => {
       e.preventDefault();
-      const img = card.querySelector('img');
-      openLightbox(img.getAttribute('src'), img.getAttribute('alt'));
+      openLightbox(i);
     });
   });
 
+  if (lightboxPrev) lightboxPrev.addEventListener('click', (e) => { e.stopPropagation(); step(-1); });
+  if (lightboxNext) lightboxNext.addEventListener('click', (e) => { e.stopPropagation(); step(1); });
+
+  // Page between photos by dragging (mouse or touch) — axis-locked so a vertical
+  // gesture is left alone instead of fighting the page.
+  const DRAG_MIN = 45;
+  let sx = 0, sy = 0, dragging = false, axisLocked = false, suppressClick = false;
+  // A click is dispatched at the nearest common ancestor of where the press and the release
+  // happened, so press-on-photo / release-on-backdrop lands on the backdrop and would close
+  // the lightbox. Remember where the press started and only honour backdrop clicks that began
+  // on the backdrop too.
+  let downOnBackdrop = false;
+
+  lightbox.addEventListener('pointerdown', (e) => {
+    downOnBackdrop = e.target === lightbox;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if (e.target.closest('.lightbox-close, .lightbox-nav')) return;
+    sx = e.clientX; sy = e.clientY;
+    dragging = true; axisLocked = false;
+    lightboxImg.style.transition = 'none';
+  });
+
+  lightbox.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    if (!axisLocked) {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      if (Math.abs(dx) <= Math.abs(dy)) { dragging = false; return; } // vertical — not ours
+      axisLocked = true;
+    }
+    lightboxImg.style.transform = `translateX(${dx * 0.55}px)`;
+  });
+
+  const endDrag = (e) => {
+    if (!dragging) { dragging = false; return; }
+    dragging = false;
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    lightboxImg.style.transition = '';
+    if (axisLocked && Math.abs(dx) > DRAG_MIN && Math.abs(dx) > Math.abs(dy)) {
+      // a completed drag fires a click right after — don't let it hit the backdrop
+      suppressClick = true;
+      setTimeout(() => { suppressClick = false; }, 350);
+      step(dx < 0 ? 1 : -1);
+    } else {
+      lightboxImg.style.transform = '';
+    }
+    axisLocked = false;
+  };
+  lightbox.addEventListener('pointerup', endDrag);
+  lightbox.addEventListener('pointercancel', endDrag);
+
   lightbox.addEventListener('click', (e) => {
-    if (e.target === lightbox || e.target === lightboxClose) closeLightbox();
+    if (suppressClick) return;
+    if (e.target === lightboxClose) { closeLightbox(); return; }
+    if (downOnBackdrop && e.target === lightbox) closeLightbox();
   });
   document.addEventListener('keydown', (e) => {
+    if (!lightbox.classList.contains('open')) return;
     if (e.key === 'Escape') closeLightbox();
+    else if (e.key === 'ArrowLeft') step(-1);
+    else if (e.key === 'ArrowRight') step(1);
   });
 
   // Slow chaotic per-letter drift on [data-letters-drift] headings

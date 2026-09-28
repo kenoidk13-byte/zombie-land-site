@@ -23434,7 +23434,13 @@
     const scene = new Scene();
     const camera = new PerspectiveCamera(35, 1, 0.1, 100);
     camera.position.set(0, 0, 6);
-    const renderer = new WebGLRenderer({ antialias: true, alpha: true });
+    let renderer;
+    try {
+      renderer = new WebGLRenderer({ antialias: true, alpha: true });
+    } catch (err) {
+      console.warn("head3d: WebGL unavailable, skipping 3D head", err);
+      return;
+    }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     container.appendChild(renderer.domElement);
     const lights = [

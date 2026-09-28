@@ -8,18 +8,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="style.css?v=51" />
+<link rel="stylesheet" href="style.css?v=84" />
 </head>
 <body>
 
 <!-- Film grain noise -->
 <div class="grain" aria-hidden="true"></div>
-<svg class="grain-svg" aria-hidden="true">
-  <filter id="grainFilter">
-    <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch" />
-    <feColorMatrix type="saturate" values="0" />
-  </filter>
-</svg>
 
 <!-- Fixed Nav -->
 <header class="nav">
@@ -133,13 +127,16 @@
 
 <!-- Lightbox -->
 <div class="lightbox" id="lightbox" aria-hidden="true">
-  <img class="lightbox-img" id="lightboxImg" alt="" />
-  <button class="lightbox-close" id="lightboxClose" aria-label="Close">&times;</button>
+  <button class="lightbox-nav lightbox-prev" id="lightboxPrev" aria-label="Previous photo"><span class="lightbox-arrow"></span></button>
+  <img class="lightbox-img" id="lightboxImg" alt="" draggable="false" />
+  <button class="lightbox-nav lightbox-next" id="lightboxNext" aria-label="Next photo"><span class="lightbox-arrow"></span></button>
+  <p class="lightbox-counter letterspaced" id="lightboxCounter" aria-live="polite"></p>
+  <button class="lightbox-close" id="lightboxClose" aria-label="Close"></button>
 </div>
 
-<audio id="bgMusic" src="music/dark-circus.m4a" loop preload="auto"></audio>
+<audio id="bgMusic" src="music/dark-circus.m4a" loop preload="metadata"></audio>
 
-<script src="app.js?v=34"></script>
+<script src="app.js?v=42"></script>
 <script src="head3d.data.js"></script>
 <script src="head3d.bundle.js"></script>
 </body>
